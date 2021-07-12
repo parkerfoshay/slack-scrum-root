@@ -1,21 +1,66 @@
 const { App, SocketModeReceiver } = require("@slack/bolt");
+const { InstallProvider } = require('@slack/oauth');
+
 require("dotenv").config();
 const root = require("./data/roots.json");
 const adj = require("./data/adj.json");
 
 
 // Initializes your app with your bot token and signing secret
-const app = new App({
+/* const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   clientSecret: process.env.CLIENT_SECRET,
   clientId: process.env.CLIENT_ID,
   socketMode: true, // enable the following to use socket mode
   appToken: process.env.APP_TOKEN
 });
+ */
 
-/* app.client.users.conversations({
-  user:
-}) */
+// initialize the installProvider
+const installer = new InstallProvider({
+  clientId: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
+  stateSecret: 'my-state-secret'
+});
+
+let database = []
+const app = new App({
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
+  clientId: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
+  stateSecret: 'my-state-secret',
+  scopes: ['channels:read', 'groups:read', 'commands', 'im:read', 'im:write', 'mpim:read', 'users:read', 'app_mentions:read'],
+  socketMode: true,
+  appToken: process.env.APP_TOKEN,
+  installationStore: {
+    storeInstallation: async (installation) => {
+      // change the line below so it saves to your database
+      console.log(installation)
+      if (installation.isEnterpriseInstall && installation.enterprise !== undefined) {
+        // support for org wide app installation
+        return await database.push(installation.enterprise.id, installation);
+      }
+      if (installation.team !== undefined) {
+        // single team app installation
+        return await database.push(installation.team.id, installation);
+      }
+      throw new Error('Failed saving installation data to installationStore');
+    },
+    fetchInstallation: async (installQuery) => {
+      // change the line below so it fetches from your database
+      if (installQuery.isEnterpriseInstall && installQuery.enterpriseId !== undefined) {
+        // org wide app installation lookup
+        return await database[installQuery.enterpriseId];
+      }
+      if (installQuery.teamId !== undefined) {
+        // single team app installation lookup
+        return await database[installQuery.teamId];
+      }
+      throw new Error('Failed fetching installation');
+    },
+  },
+});
+
 app.command("/scrum", async ({ command, ack, say }) => {
   try {
     let botInfo = await app.client.bots.info()
