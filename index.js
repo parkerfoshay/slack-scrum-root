@@ -16,7 +16,7 @@ const app = new App({
 /* app.client.users.conversations({
   user:
 }) */
-app.command("/scrum", async ({ command, ack, say }) => {
+app.command("/pick", async ({ command, ack, say }) => {
   try {
     let botInfo = await app.client.bots.info()
     let members = await app.client.conversations.members({
