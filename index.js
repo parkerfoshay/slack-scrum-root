@@ -20,10 +20,12 @@ app.command("/scrum", async ({ command, ack, say }) => {
   try {
     let botInfo = await app.client.bots.info()
     let members = await app.client.conversations.members({
-      channel: "C027P6PEWRY",
+      channel: "C02PFSPT6P8",
     });
 
-    if (command.channel_id === "C027P6PEWRY") {
+    console.log(command);
+
+    if (command.channel_id === "C02PFSPT6P8") {
       await ack();
 
       let rndMember = Math.floor(Math.random() * members.members.length - 1);
